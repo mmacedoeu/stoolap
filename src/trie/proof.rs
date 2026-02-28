@@ -246,6 +246,75 @@ impl HexaryProof {
         // Final hash should match the expected root
         current_hash == self.root
     }
+
+    /// Verify multiple proofs in parallel
+    ///
+    /// Uses rayon for parallel verification across CPU cores.
+    ///
+    /// # Arguments
+    ///
+    /// * `proofs` - Slice of proofs to verify
+    ///
+    /// # Returns
+    ///
+    /// `true` if all proofs are valid, `false` if any proof is invalid
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # #[cfg(feature = "parallel")]
+    /// # {
+    /// use stoolap::trie::proof::HexaryProof;
+    ///
+    /// let proofs = vec![
+    ///     HexaryProof {
+    ///         value_hash: [1u8; 32],
+    ///         levels: vec![],
+    ///         root: [1u8; 32],
+    ///         path: vec![],
+    ///     },
+    /// ];
+    ///
+    /// assert!(HexaryProof::verify_batch(&proofs));
+    /// # }
+    /// ```
+    #[cfg(feature = "parallel")]
+    pub fn verify_batch(proofs: &[Self]) -> bool {
+        use rayon::prelude::*;
+        proofs.par_iter().all(|p| p.verify())
+    }
+
+    /// Verify multiple proofs sequentially
+    ///
+    /// Single-threaded version for environments without rayon.
+    ///
+    /// # Arguments
+    ///
+    /// * `proofs` - Slice of proofs to verify
+    ///
+    /// # Returns
+    ///
+    /// `true` if all proofs are valid, `false` if any proof is invalid
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use stoolap::trie::proof::HexaryProof;
+    ///
+    /// let proofs = vec![
+    ///     HexaryProof {
+    ///         value_hash: [1u8; 32],
+    ///         levels: vec![],
+    ///         root: [1u8; 32],
+    ///         path: vec![],
+    ///     },
+    /// ];
+    ///
+    /// assert!(HexaryProof::verify_batch_sequential(&proofs));
+    /// ```
+    pub fn verify_batch_sequential(proofs: &[Self]) -> bool {
+        proofs.iter().all(|p| p.verify())
+    }
 }
 
 impl Default for HexaryProof {
@@ -1179,5 +1248,74 @@ mod tests {
         let deserialized = HexaryProof::deserialize(&serialized).unwrap();
 
         assert_eq!(original, deserialized);
+    }
+
+    #[test]
+    fn test_hexary_proof_batch_verify() {
+        use crate::trie::proof::HexaryProof;
+
+        let proofs = vec![
+            HexaryProof {
+                value_hash: [1u8; 32],
+                levels: vec![],
+                root: [1u8; 32],
+                path: vec![],
+            },
+            HexaryProof {
+                value_hash: [2u8; 32],
+                levels: vec![],
+                root: [2u8; 32],
+                path: vec![],
+            },
+        ];
+
+        assert!(HexaryProof::verify_batch_sequential(&proofs));
+
+        // With invalid proof
+        let invalid_proofs = vec![
+            HexaryProof {
+                value_hash: [1u8; 32],
+                levels: vec![],
+                root: [99u8; 32], // Wrong
+                path: vec![],
+            },
+        ];
+
+        assert!(!HexaryProof::verify_batch_sequential(&invalid_proofs));
+    }
+
+    #[test]
+    #[cfg(feature = "parallel")]
+    fn test_hexary_proof_batch_verify_parallel() {
+        use crate::trie::proof::HexaryProof;
+
+        let proofs = vec![
+            HexaryProof {
+                value_hash: [1u8; 32],
+                levels: vec![],
+                root: [1u8; 32],
+                path: vec![],
+            },
+            HexaryProof {
+                value_hash: [2u8; 32],
+                levels: vec![],
+                root: [2u8; 32],
+                path: vec![],
+            },
+        ];
+
+        assert!(HexaryProof::verify_batch(&proofs));
+
+        // With invalid proof
+        let invalid_proofs = vec![
+            HexaryProof {
+                value_hash: [1u8; 32],
+                levels: vec![],
+                root: [99u8; 32], // Wrong
+                path: vec![],
+            },
+        ];
+
+        assert!(!HexaryProof::verify_batch(&invalid_proofs));
     }
 }
