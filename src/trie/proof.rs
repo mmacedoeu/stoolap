@@ -19,7 +19,6 @@
 //! in a Merkle tree without requiring the full tree.
 
 use sha2::{Digest, Sha256};
-use std::default::Default;
 
 /// A Merkle proof that demonstrates inclusion of a value in a Merkle tree
 ///
@@ -45,7 +44,7 @@ pub struct MerkleProof {
 ///
 /// Contains the sibling information needed to verify one level
 /// of a 16-way hexary trie.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct ProofLevel {
     /// 16-bit bitmap indicating which child positions have hashes
     /// Bit i is set if child at position i (0-15) exists
@@ -85,6 +84,16 @@ pub struct HexaryProof {
 
 impl HexaryProof {
     /// Create a new empty hexary proof
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use stoolap::trie::proof::HexaryProof;
+    ///
+    /// let proof = HexaryProof::new();
+    /// assert_eq!(proof.value_hash, [0u8; 32]);
+    /// assert!(proof.levels.is_empty());
+    /// ```
     pub fn new() -> Self {
         Self {
             value_hash: [0u8; 32],
@@ -95,6 +104,20 @@ impl HexaryProof {
     }
 
     /// Create a proof with a value hash
+    ///
+    /// # Arguments
+    ///
+    /// * `value_hash` - The hash of the value to prove
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use stoolap::trie::proof::HexaryProof;
+    ///
+    /// let proof = HexaryProof::with_value_hash([1u8; 32]);
+    /// assert_eq!(proof.value_hash, [1u8; 32]);
+    /// assert!(proof.levels.is_empty());
+    /// ```
     pub fn with_value_hash(value_hash: [u8; 32]) -> Self {
         Self {
             value_hash,
@@ -105,16 +128,59 @@ impl HexaryProof {
     }
 
     /// Add a proof level
+    ///
+    /// # Arguments
+    ///
+    /// * `bitmap` - 16-bit bitmap indicating which child positions have hashes
+    /// * `siblings` - Sibling hashes for non-path children
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use stoolap::trie::proof::HexaryProof;
+    ///
+    /// let mut proof = HexaryProof::new();
+    /// proof.add_level(0b1000000000001000, vec![[2u8; 32]]);
+    /// assert_eq!(proof.levels.len(), 1);
+    /// ```
     pub fn add_level(&mut self, bitmap: u16, siblings: Vec<[u8; 32]>) {
         self.levels.push(ProofLevel { bitmap, siblings });
     }
 
     /// Set the root hash
+    ///
+    /// # Arguments
+    ///
+    /// * `root` - The expected root hash
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use stoolap::trie::proof::HexaryProof;
+    ///
+    /// let mut proof = HexaryProof::new();
+    /// proof.set_root([1u8; 32]);
+    /// assert_eq!(proof.root, [1u8; 32]);
+    /// ```
     pub fn set_root(&mut self, root: [u8; 32]) {
         self.root = root;
     }
 
     /// Set the path
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The nibble path (2 nibbles packed per byte, LSB first)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use stoolap::trie::proof::HexaryProof;
+    ///
+    /// let mut proof = HexaryProof::new();
+    /// proof.set_path(vec![0x35]);
+    /// assert_eq!(proof.path, vec![0x35]);
+    /// ```
     pub fn set_path(&mut self, path: Vec<u8>) {
         self.path = path;
     }
@@ -507,9 +573,6 @@ mod tests {
 
     #[test]
     fn test_hexary_proof_basic_structure() {
-        use crate::trie::proof::HexaryProof;
-        use crate::trie::proof::ProofLevel;
-
         let proof = HexaryProof {
             value_hash: [1u8; 32],
             levels: vec![
@@ -526,5 +589,63 @@ mod tests {
         assert_eq!(proof.levels.len(), 1);
         assert_eq!(proof.levels[0].bitmap, 0b1000000000001000);
         assert_eq!(proof.path, vec![0x35]);
+    }
+
+    #[test]
+    fn test_hexary_proof_new() {
+        let proof = HexaryProof::new();
+        assert_eq!(proof.value_hash, [0u8; 32]);
+        assert!(proof.levels.is_empty());
+        assert_eq!(proof.root, [0u8; 32]);
+        assert!(proof.path.is_empty());
+    }
+
+    #[test]
+    fn test_hexary_proof_with_value_hash() {
+        let proof = HexaryProof::with_value_hash([42u8; 32]);
+        assert_eq!(proof.value_hash, [42u8; 32]);
+        assert!(proof.levels.is_empty());
+        assert_eq!(proof.root, [0u8; 32]);
+        assert!(proof.path.is_empty());
+    }
+
+    #[test]
+    fn test_hexary_proof_add_level() {
+        let mut proof = HexaryProof::new();
+        proof.add_level(0b1000000000001000, vec![[2u8; 32]]);
+        assert_eq!(proof.levels.len(), 1);
+        assert_eq!(proof.levels[0].bitmap, 0b1000000000001000);
+        assert_eq!(proof.levels[0].siblings.len(), 1);
+        assert_eq!(proof.levels[0].siblings[0], [2u8; 32]);
+    }
+
+    #[test]
+    fn test_hexary_proof_set_root() {
+        let mut proof = HexaryProof::new();
+        proof.set_root([99u8; 32]);
+        assert_eq!(proof.root, [99u8; 32]);
+    }
+
+    #[test]
+    fn test_hexary_proof_set_path() {
+        let mut proof = HexaryProof::new();
+        proof.set_path(vec![0x35, 0xAB]);
+        assert_eq!(proof.path, vec![0x35, 0xAB]);
+    }
+
+    #[test]
+    fn test_hexary_proof_default() {
+        let proof = HexaryProof::default();
+        assert_eq!(proof.value_hash, [0u8; 32]);
+        assert!(proof.levels.is_empty());
+        assert_eq!(proof.root, [0u8; 32]);
+        assert!(proof.path.is_empty());
+    }
+
+    #[test]
+    fn test_proof_level_default() {
+        let level = ProofLevel::default();
+        assert_eq!(level.bitmap, 0);
+        assert!(level.siblings.is_empty());
     }
 }
