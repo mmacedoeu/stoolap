@@ -740,8 +740,10 @@ mod tests {
     fn test_encode_row_id() {
         let key = encode_row_id(1);
         assert_eq!(key.len(), 16); // 8 bytes * 2 nibbles
-        assert_eq!(key[0], 1); // First nibble of 1
-        assert_eq!(key[1], 0); // Second nibble of 1
+        // For row_id=1, le_bytes are [1,0,0,0,0,0,0,0]
+        // First byte 1: high nibble=0, low nibble=1
+        assert_eq!(key[0], 0); // High nibble of first byte (1 >> 4)
+        assert_eq!(key[1], 1); // Low nibble of first byte (1 & 0x0F)
     }
 
     #[test]
