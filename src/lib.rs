@@ -78,6 +78,7 @@ pub mod functions;
 pub mod optimizer;
 pub mod parser;
 pub mod storage;
+pub mod trie;
 
 #[cfg(target_arch = "wasm32")]
 pub mod wasm;
