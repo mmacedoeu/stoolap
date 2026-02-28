@@ -72,6 +72,7 @@ static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 pub mod api;
 pub mod common;
 pub mod core;
+pub mod determ;
 pub mod executor;
 pub mod functions;
 pub mod optimizer;
