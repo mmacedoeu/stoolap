@@ -478,6 +478,58 @@ pub fn unpack_nibbles(packed: &[u8]) -> Vec<u8> {
     result
 }
 
+/// Reconstruct the 16-child array from bitmap, siblings, and path
+///
+/// Given the bitmap of which children exist and the sibling hashes,
+/// reconstruct the full 16-element child array with our hash at the path position.
+///
+/// # Arguments
+///
+/// * `bitmap` - 16-bit bitmap of existing children
+/// * `siblings` - Sibling hashes (non-path children)
+/// * `path_nibble` - Which child position we took (0-15)
+/// * `our_hash` - Our hash to place at path_nibble position
+///
+/// # Returns
+///
+/// Array of 16 child hashes (empty positions are [0; 32])
+///
+/// # Examples
+///
+/// ```
+/// use stoolap::trie::proof::reconstruct_children;
+///
+/// let bitmap = 0b101u16; // bits 0 and 2 set
+/// let siblings = vec![[2u8; 32]];
+/// let children = reconstruct_children(bitmap, &siblings, 0, [1u8; 32]);
+/// assert_eq!(children[0], [1u8; 32]); // Our hash
+/// assert_eq!(children[2], [2u8; 32]); // Sibling
+/// ```
+pub fn reconstruct_children(
+    bitmap: u16,
+    siblings: &[[u8; 32]],
+    path_nibble: u8,
+    our_hash: [u8; 32],
+) -> [[u8; 32]; 16] {
+    let mut children = [[0u8; 32]; 16];
+    let mut sibling_idx = 0;
+
+    for i in 0..16 {
+        if bitmap & (1 << i) != 0 {
+            if i == path_nibble as usize {
+                children[i] = our_hash;
+            } else {
+                if sibling_idx < siblings.len() {
+                    children[i] = siblings[sibling_idx];
+                    sibling_idx += 1;
+                }
+            }
+        }
+    }
+
+    children
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -758,5 +810,24 @@ mod tests {
         let packed = pack_nibbles(&original);
         let unpacked = unpack_nibbles(&packed);
         assert_eq!(original, unpacked);
+    }
+
+    #[test]
+    fn test_reconstruct_children() {
+        use crate::trie::proof::reconstruct_children;
+
+        // At level with path nibble 5, siblings at positions 3 and 12
+        // bits 3, 5, 12 set: (1<<3) | (1<<5) | (1<<12) = 8 | 32 | 4096 = 4136
+        let bitmap = (1u16 << 3) | (1u16 << 5) | (1u16 << 12);
+        let siblings = vec![[3u8; 32], [12u8; 32]];
+        let path_nibble = 5;
+        let our_hash = [5u8; 32];
+
+        let children = reconstruct_children(bitmap, &siblings, path_nibble, our_hash);
+
+        assert_eq!(children[3], [3u8; 32]);
+        assert_eq!(children[5], [5u8; 32]); // Our hash
+        assert_eq!(children[12], [12u8; 32]);
+        assert_eq!(children[0], [0u8; 32]); // Empty
     }
 }
