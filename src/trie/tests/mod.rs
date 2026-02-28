@@ -13,3 +13,4 @@
 // limitations under the License.
 
 mod proof_tests;
+mod row_trie_tests;
