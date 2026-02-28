@@ -184,6 +184,68 @@ impl HexaryProof {
     pub fn set_path(&mut self, path: Vec<u8>) {
         self.path = path;
     }
+
+    /// Verify the hexary Merkle proof
+    ///
+    /// Performs streaming verification from leaf to root by reconstructing
+    /// each level's hash from the siblings and path nibbles.
+    ///
+    /// # Returns
+    ///
+    /// `true` if the proof is valid (reconstructed hash matches expected root), `false` otherwise
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use stoolap::trie::proof::{HexaryProof, hash_16_children, reconstruct_children};
+    ///
+    /// let value_hash = [5u8; 32];
+    /// let bitmap = (1u16 << 3) | (1u16 << 5);
+    /// let siblings = vec![[3u8; 32]];
+    /// let children = reconstruct_children(bitmap, &siblings, 5, value_hash);
+    /// let root = hash_16_children(&children);
+    ///
+    /// let mut proof = HexaryProof::new();
+    /// proof.value_hash = value_hash;
+    /// proof.add_level(bitmap, siblings);
+    /// proof.set_root(root);
+    /// proof.set_path(vec![0x50]);
+    ///
+    /// assert!(proof.verify());
+    /// ```
+    pub fn verify(&self) -> bool {
+        // If no levels, value should equal root directly
+        if self.levels.is_empty() {
+            return self.value_hash == self.root;
+        }
+
+        // Unpack the path to get individual nibbles
+        let nibbles = unpack_nibbles(&self.path);
+
+        // Start with the value hash
+        let mut current_hash = self.value_hash;
+
+        // Verify each level from bottom (leaf) to top (root)
+        // levels are stored root-to-leaf, so we iterate in reverse
+        for (level_idx, level) in self.levels.iter().enumerate().rev() {
+            // Get the path nibble for this level
+            let path_nibble = if level_idx < nibbles.len() {
+                nibbles[level_idx]
+            } else {
+                // If we've exhausted the path, use 0 (shouldn't happen in valid proofs)
+                0
+            };
+
+            // Reconstruct the 16-child array
+            let children = reconstruct_children(level.bitmap, &level.siblings, path_nibble, current_hash);
+
+            // Hash the children to get the parent hash
+            current_hash = hash_16_children(&children);
+        }
+
+        // Final hash should match the expected root
+        current_hash == self.root
+    }
 }
 
 impl Default for HexaryProof {
@@ -893,5 +955,72 @@ mod tests {
         let hash1 = hash_16_children(&children);
         let hash2 = hash_16_children(&children);
         assert_eq!(hash1, hash2);
+    }
+
+    #[test]
+    fn test_hexary_proof_verify_single_level() {
+        use crate::trie::proof::{HexaryProof, hash_16_children, reconstruct_children, pack_nibbles};
+
+        // Create a simple proof with one level
+        // Path nibble is 5, siblings at positions 3 and 12
+        let bitmap = (1u16 << 3) | (1u16 << 5) | (1u16 << 12);
+        let siblings = vec![[3u8; 32], [12u8; 32]];
+        let value_hash = [5u8; 32]; // Our value
+
+        // Reconstruct children and compute expected root
+        let children = reconstruct_children(bitmap, &siblings, 5, value_hash);
+        let expected_root = hash_16_children(&children);
+
+        let mut proof = HexaryProof::new();
+        proof.value_hash = value_hash;
+        proof.add_level(bitmap, siblings);
+        proof.set_root(expected_root);
+        proof.set_path(pack_nibbles(&[5])); // nibble 5 packed
+
+        assert!(proof.verify());
+    }
+
+    #[test]
+    fn test_hexary_proof_verify_two_levels() {
+        use crate::trie::proof::{HexaryProof, hash_16_children, reconstruct_children, pack_nibbles};
+
+        // Create a two-level proof
+        let value_hash = [1u8; 32];
+
+        // Level 0 (leaf): path nibble 5, sibling at position 3
+        let level0_bitmap = (1u16 << 3) | (1u16 << 5);
+        let level0_siblings = vec![[3u8; 32]];
+        let level0_children = reconstruct_children(level0_bitmap, &level0_siblings, 5, value_hash);
+        let level0_hash = hash_16_children(&level0_children);
+
+        // Level 1 (root): path nibble 12, sibling at position 7
+        let level1_bitmap = (1u16 << 7) | (1u16 << 12);
+        let level1_siblings = vec![[7u8; 32]];
+        let level1_children = reconstruct_children(level1_bitmap, &level1_siblings, 12, level0_hash);
+        let expected_root = hash_16_children(&level1_children);
+
+        // Path is [12, 5] - level 1 uses nibble 12, level 0 uses nibble 5
+        let mut proof = HexaryProof::new();
+        proof.value_hash = value_hash;
+        proof.add_level(level1_bitmap, level1_siblings); // Root level first
+        proof.add_level(level0_bitmap, level0_siblings); // Leaf level
+        proof.set_root(expected_root);
+        proof.set_path(pack_nibbles(&[12, 5])); // nibbles [12, 5] packed
+
+        assert!(proof.verify());
+    }
+
+    #[test]
+    fn test_hexary_proof_verify_invalid_root() {
+        use crate::trie::proof::{HexaryProof, pack_nibbles};
+
+        // Create a proof with wrong root
+        let mut proof = HexaryProof::new();
+        proof.value_hash = [1u8; 32];
+        proof.add_level(0b1000000000001000, vec![[2u8; 32]]);
+        proof.set_root([99u8; 32]); // Wrong root
+        proof.set_path(pack_nibbles(&[1])); // nibble 1
+
+        assert!(!proof.verify());
     }
 }
