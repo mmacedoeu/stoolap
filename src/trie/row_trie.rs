@@ -392,7 +392,7 @@ impl RowTrie {
                     let new_child = Box::new(Self::do_insert_static(
                         Some(*child),
                         &key[prefix.len()..],
-                        depth + prefix.len(),
+                        0,  // Reset depth - key is now sliced, so index from 0
                         row_id,
                         row,
                     ));
@@ -549,14 +549,14 @@ impl RowTrie {
                 self.do_get_hash(children[nibble].as_ref().map(|c| c.as_ref()), key, depth + 1)
             }
             Some(RowNode::Extension { prefix, child, .. }) => {
-                // Check if the key starts with the extension's prefix
+                // Check if the key starting at depth has the extension's prefix
                 if depth + prefix.len() <= key.len() {
                     let key_prefix = &key[depth..depth + prefix.len()];
                     if key_prefix == &prefix[..] {
                         return self.do_get_hash(
                             Some(child.as_ref()),
-                            key,
-                            depth + prefix.len(),
+                            &key[depth + prefix.len()..],  // Slice past the prefix
+                            0,  // Reset depth - key is now relative
                         );
                     }
                 }
@@ -579,14 +579,10 @@ impl RowTrie {
                 if *row_id != target_row_id {
                     return None;
                 }
-                // Re-encode the target row_id to get its expected key
-                let expected_key = encode_row_id(target_row_id);
-                // Check if the search key matches the expected key from current depth
-                if depth >= expected_key.len() || &key[depth..] == &expected_key[depth..] {
-                    row_data.as_ref().map(|r| r.as_ref().clone())
-                } else {
-                    None
-                }
+                // After slicing, key contains the remaining nibbles.
+                // Return the data if we've reached the end of the path (key is all zeros/empty)
+                // Note: row_id match is the primary verification - if we're at the right leaf, return the data
+                row_data.as_ref().map(|r| r.as_ref().clone())
             }
             Some(RowNode::Branch { children, .. }) => {
                 if depth >= key.len() {
@@ -602,8 +598,8 @@ impl RowTrie {
                     if key_prefix == &prefix[..] {
                         return self.do_get(
                             Some(child.as_ref()),
-                            key,
-                            depth + prefix.len(),
+                            &key[depth + prefix.len()..],  // Slice past the prefix
+                            0,  // Reset depth - key is now relative
                             target_row_id,
                         );
                     }
@@ -679,14 +675,8 @@ impl RowTrie {
                 if *row_id != target_row_id {
                     return None;
                 }
-                // Re-encode the target row_id to get its expected key
-                let expected_key = encode_row_id(target_row_id);
-                // Check if the search key matches the expected key from current depth
-                if depth >= expected_key.len() || &key[depth..] == &expected_key[depth..] {
-                    Some(*row_hash)
-                } else {
-                    None
-                }
+                // row_id match is the primary verification - if we're at the right leaf, return hash
+                Some(*row_hash)
             }
             Some(RowNode::Branch { children, .. }) => {
                 if depth >= key.len() {
@@ -731,8 +721,8 @@ impl RowTrie {
                         }
                         return self.do_get_hexary_proof(
                             Some(child.as_ref()),
-                            key,
-                            depth + prefix.len(),
+                            &key[depth + prefix.len()..],  // Slice past the prefix
+                            0,  // Reset depth - key is now relative
                             levels,
                             path_nibbles,
                             target_row_id,
@@ -829,5 +819,37 @@ mod tests {
         let mut diff = StateDiff::new();
         diff.inserted.push((1, [1u8; 32]));
         assert!(!diff.is_empty());
+    }
+
+    #[test]
+    fn test_sequential_row_ids_1_to_10() {
+        use crate::determ::{DetermRow, DetermValue};
+
+        let mut trie = RowTrie::new();
+
+        // Insert sequential rows 1-10
+        for i in 1..=10 {
+            let row = DetermRow::from_values(vec![DetermValue::integer(i * 10)]);
+            trie.insert(i, row);
+        }
+
+        // Verify all hashes exist - this is the regression test for the bug
+        for i in 1..=10 {
+            assert!(
+                trie.get_hash(i).is_some(),
+                "Should be able to get hash for row {}",
+                i
+            );
+        }
+
+        // Verify all rows can be retrieved
+        for i in 1..=10 {
+            let row = trie.get(i);
+            assert!(row.is_some(), "Should be able to get row {}", i);
+            if let Some(r) = row {
+                assert_eq!(r.len(), 1, "Row {} should have 1 value", i);
+                assert_eq!(r[0], DetermValue::integer(i * 10), "Row {} value mismatch", i);
+            }
+        }
     }
 }
