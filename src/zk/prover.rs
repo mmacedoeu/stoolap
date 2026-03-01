@@ -206,8 +206,15 @@ impl STWOProver {
     ///
     /// This method uses the STWO Cairo prover to generate a real STARK proof
     /// for a Cairo program execution.
+    ///
+    /// Note: Real proof generation requires:
+    /// - A compiled Cairo program (with CASM)
+    /// - Valid input data
+    /// - Full STWO integration
+    ///
+    /// Currently returns an error if the program is not properly compiled.
     #[cfg(feature = "zk")]
-    fn generate_real_proof(
+    pub fn generate_real_proof(
         &self,
         program: &CairoProgram,
         inputs: &[u8],
