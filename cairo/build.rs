@@ -7,7 +7,9 @@ use std::path::Path;
 
 fn main() {
     // Tell Cargo to rerun if any .cairo file changes
-    println!("cargo:rerun-if-changed=*.cairo");
+    println!("cargo:rerun-if-changed=hexary_verify.cairo");
+    println!("cargo:rerun-if-changed=merkle_batch.cairo");
+    println!("cargo:rerun-if-changed=state_transition.cairo");
 
     let out_dir = env::var("OUT_DIR").unwrap();
     let dest_path = Path::new(&out_dir);
@@ -16,7 +18,7 @@ fn main() {
     let programs = ["hexary_verify", "merkle_batch", "state_transition"];
 
     for program in programs {
-        let src_path = format!("src/{}.cairo", program);
+        let src_path = format!("{}.cairo", program);
         if Path::new(&src_path).exists() {
             // For now, just verify the file exists
             // Real compilation would use cairo-compile or similar
