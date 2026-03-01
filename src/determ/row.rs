@@ -15,6 +15,9 @@
 //! Deterministic Row type for blockchain SQL database
 
 use crate::core::Result;
+use crate::core::value::Value;
+use crate::core::types::DataType;
+use crate::common::SmartString;
 use crate::determ::value::DetermValue;
 
 /// Deterministic Row type
@@ -101,6 +104,52 @@ impl DetermRow {
             offset = value_end;
         }
         Ok(Self { values })
+    }
+
+    /// Convert the row to a Value (for ZK proof generation)
+    ///
+    /// Returns the first value in the row, or Null if the row is empty.
+    /// This is used when converting row data for compressed proof generation.
+    pub fn to_value(&self) -> Value {
+        if self.values.is_empty() {
+            return Value::Null(DataType::Null);
+        }
+
+        match &self.values[0] {
+            DetermValue::Null => Value::Null(DataType::Null),
+            DetermValue::Integer(i) => Value::Integer(*i),
+            DetermValue::Float(f) => Value::Float(*f),
+            DetermValue::InlineText(bytes, len) => {
+                let text = String::from_utf8(bytes[..*len as usize].to_vec()).unwrap_or_default();
+                Value::Text(SmartString::from(text))
+            }
+            DetermValue::HeapText(data) => {
+                let text = String::from_utf8(data.as_ref().to_vec()).unwrap_or_default();
+                Value::Text(SmartString::from(text))
+            }
+            DetermValue::Boolean(b) => Value::Boolean(*b),
+            DetermValue::Timestamp(ts) => {
+                // Convert i64 nanoseconds to DateTime<Utc>
+                use chrono::DateTime;
+                use chrono::Utc;
+                use chrono::NaiveDateTime;
+
+                // Convert nanoseconds to seconds
+                let secs = ts / 1_000_000_000;
+                let nanos = (ts % 1_000_000_000) as u32;
+                if secs >= 0 {
+                    if let Some(naive) = NaiveDateTime::from_timestamp_opt(secs, nanos) {
+                        return Value::Timestamp(DateTime::<Utc>::from_utc(naive, Utc));
+                    }
+                }
+                Value::Null(DataType::Timestamp)
+            }
+            DetermValue::Extension(data) => {
+                // Extension data is stored as Extension in the Value type
+                use crate::common::CompactArc;
+                Value::Extension(CompactArc::from(data.as_ref().to_vec()))
+            }
+        }
     }
 }
 

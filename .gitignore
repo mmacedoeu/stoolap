@@ -40,3 +40,4 @@ deny.toml
 docs/_site/
 docs/.jekyll-cache/
 git_history_backup.log
+.gitnexus
