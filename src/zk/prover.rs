@@ -175,7 +175,7 @@ impl STWOProver {
     /// Generate a mock STARK proof for testing
     ///
     /// This is a temporary implementation until STWO integration is complete.
-    fn generate_mock_proof(
+    pub fn generate_mock_proof(
         &self,
         program: &CairoProgram,
         inputs: &[u8],

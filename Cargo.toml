@@ -182,6 +182,10 @@ harness = false
 name = "hexary_proof"
 harness = false
 
+[[bench]]
+name = "stark_proof"
+harness = false
+
 [profile.bench]
 lto = true
 codegen-units = 1
