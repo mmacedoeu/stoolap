@@ -39,6 +39,8 @@ pub mod cairo;
 pub mod prover;
 #[cfg(feature = "zk")]
 pub mod proof;
+#[cfg(feature = "zk")]
+pub mod bundled;
 
 #[cfg(feature = "zk")]
 pub use cairo::{CairoProgram, CairoProgramHash, CairoProgramRegistry, CompileError, RegistryError};
@@ -49,4 +51,10 @@ pub use proof::{
     CairoProgramForRegistration, MAX_INPUTS_SIZE, MAX_OUTPUTS_SIZE, MAX_PROOF_SIZE,
     MAX_PUBLIC_INPUTS_SIZE, ProofSummary, ProofValidationError, SerializationError,
     SolanaSerialize, StarkProof, ZKOperation,
+};
+#[cfg(feature = "zk")]
+pub use bundled::{
+    get_bundled_program, get_bundled_program_name, is_bundled_program, register_bundled_programs,
+    BundledError, HEXARY_VERIFY_CASM, HEXARY_VERIFY_HASH, MERKLE_BATCH_CASM, MERKLE_BATCH_HASH,
+    STATE_TRANSITION_CASM, STATE_TRANSITION_HASH,
 };
