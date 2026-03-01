@@ -11,15 +11,15 @@ RFC-0106
 - [ ] Add `stwo-cairo-prover` dependency to Cargo.toml
 - [ ] Create `cairo/build.rs` for Cairo compilation
 - [ ] Add `generate_real_proof()` method to STWOProver
-- [ ] Create `benches/stark_proof.rs` with 4 benchmarks:
+- [ ] Create `benches/stark_proof.rs` with 8 benchmarks (4 mock + 4 real):
   - [ ] bench_mock_proof_generation
-  - [ ] bench_real_proof_generation
+  - [ ] bench_real_proof_generation (requires zk)
   - [ ] bench_mock_proof_verification
-  - [ ] bench_real_proof_verification
+  - [ ] bench_real_proof_verification (requires zk)
 - [ ] Benchmark all 3 Cairo programs (hexary_verify, merkle_batch, state_transition)
 - [ ] Run batch sizes: 10, 100, 1000
-- [ ] Verify benchmarks compile with default features (mock)
-- [ ] Verify benchmarks compile with `--features real-stwo`
+- [ ] Verify mock benchmarks compile without zk feature
+- [ ] Verify real benchmarks compile with `--features zk`
 
 ## Dependencies
 
@@ -97,11 +97,11 @@ stark_proof_verification (real)
 ## Test Commands
 
 ```bash
-# Run mock benchmarks (default)
+# Run mock benchmarks only (without zk)
 cargo bench --bench stark_proof
 
-# Run with real STWO
-cargo bench --bench stark_proof --features real-stwo
+# Run ALL benchmarks including real (requires zk)
+cargo bench --bench stark_proof --features zk
 ```
 
 ## Claimant

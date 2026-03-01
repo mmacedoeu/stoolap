@@ -5,7 +5,7 @@ Draft
 
 ## Summary
 
-Add benchmark infrastructure for STARK proof generation and verification using real STWO prover, with comparison to current mock implementation.
+Add benchmark infrastructure for STARK proof generation and verification using real STWO prover, with comparison to current mock implementation. Duplicated benchmarks for both mock and real (not feature-gated).
 
 ## Motivation
 
@@ -20,26 +20,31 @@ The current `STWOProver::prove()` method uses `generate_mock_proof()` which crea
 
 ```
 benches/stark_proof.rs
-├── bench_mock_proof_generation    # Using generate_mock_proof()
-├── bench_real_proof_generation    # Using stwo-cairo-prover
-├── bench_mock_proof_verification  # Verify mock proofs
-└── bench_real_proof_verification  # Verify real STWO proofs
+├── bench_mock_proof_generation      # Using generate_mock_proof() - always available
+├── bench_real_proof_generation      # Using stwo-cairo-prover - requires zk feature
+├── bench_mock_proof_verification    # Verify mock proofs - always available
+└── bench_real_proof_verification   # Verify real STWO proofs - requires zk feature
 ```
 
 ### Dependencies
 
-Add to `Cargo.toml`:
-```toml
-stwo-cairo-prover = "1.1"  # Real prover (feature-gated)
-```
-
-### Feature Flags
+The `zk` feature already exists. Add `stwo-cairo-prover` as part of zk:
 
 ```toml
-[features]
-default = []
-real-stwo = ["dep:stwo-cairo-prover"]
+# Already exists:
+# stwo = { version = "2.1", optional = true }
+
+# Add:
+stwo-cairo-prover = "1.1"
 ```
+
+### No Feature Flag - Duplicated Benchmarks
+
+Instead of feature-gated code, duplicate benchmark functions:
+- Mock benchmarks: Always compile (no STWO dependency)
+- Real benchmarks: Require `zk` feature
+
+This allows running both in CI when zk is enabled.
 
 ### Benchmark Parameters
 
@@ -63,15 +68,17 @@ fn main() {
 
 ### Prover Integration
 
-Add real proving method to `STWOProver`:
+Two separate methods in `STWOProver`:
 
 ```rust
-#[cfg(feature = "real-stwo")]
-fn generate_real_proof(
-    &self,
-    program: &CairoProgram,
-    inputs: &[u8],
-) -> Result<StarkProof, ProverError> {
+// Existing - always available
+fn generate_mock_proof(&self, program: &CairoProgram, inputs: &[u8]) -> Result<StarkProof, ProverError> {
+    // Current implementation - creates fake proof
+}
+
+// New - requires zk feature (for real benchmarks)
+#[cfg(feature = "zk")]
+fn generate_real_proof(&self, program: &CairoProgram, inputs: &[u8]) -> Result<StarkProof, ProverError> {
     use stwo_cairo_prover::CairoProver;
 
     let prover = CairoProver::new(self.config.clone());
@@ -82,17 +89,34 @@ fn generate_real_proof(
 ### Benchmark Implementation
 
 ```rust
-fn bench_real_proof_generation(c: &mut Criterion) {
-    let mut group = c.benchmark_group("stark_proof_generation");
+// Mock - always available
+fn bench_mock_proof_generation(c: &mut Criterion) {
+    let mut group = c.benchmark_group("stark_mock_proof_generation");
 
     for size in [10, 100, 1000].iter() {
         group.bench_with_input(BenchmarkId::from_parameter(size), size, |b, &size| {
             let prover = STWOProver::new();
-            let program = load_cairo_program("merkle_batch");
             let inputs = generate_batch_inputs(size);
 
             b.iter(|| {
-                prover.prove(&program, &inputs);
+                prover.generate_mock_proof(&program, &inputs);
+            });
+        });
+    }
+}
+
+// Real - requires zk feature
+#[cfg(feature = "zk")]
+fn bench_real_proof_generation(c: &mut Criterion) {
+    let mut group = c.benchmark_group("stark_real_proof_generation");
+
+    for size in [10, 100, 1000].iter() {
+        group.bench_with_input(BenchmarkId::from_parameter(size), size, |b, &size| {
+            let prover = STWOProver::new();
+            let inputs = generate_batch_inputs(size);
+
+            b.iter(|| {
+                prover.generate_real_proof(&program, &inputs);
             });
         });
     }
@@ -101,25 +125,26 @@ fn bench_real_proof_generation(c: &mut Criterion) {
 
 ## Rationale
 
-### Why This Approach?
+### Why Duplicated Benchmarks?
 
-1. **Feature-gated** - Real STWO only required when benchmarking, not for basic functionality
-2. **Comparison ready** - Both mock and real run same benchmark suite
-3. **Extensible** - Easy to add new Cairo programs
+1. **No conditional compilation** - Clear, explicit code
+2. **CI friendly** - Both run when zk is enabled
+3. **Easy comparison** - Same structure, different implementation
+4. **No runtime feature detection** - Compile-time selection
 
 ### Alternatives Considered
 
 | Approach | Pros | Cons |
 |----------|------|------|
-| A: Replace mock entirely | Simpler code | No comparison possible |
-| B: New prover struct | Clean separation | More code duplication |
-| C: Feature-gated (chosen) | Both comparisons | Slightly more complex |
+| A: Feature-gated functions | Single code path | Complex, harder to compare |
+| B: Runtime detection | Single binary | Slower, added complexity |
+| C: Duplicated (chosen) | Clear, comparable | Slightly more code |
 
 ## Implementation
 
 ### Files to Create
 
-1. `benches/stark_proof.rs` - Benchmark suite
+1. `benches/stark_proof.rs` - Benchmark suite with duplicated benchmarks
 2. `cairo/build.rs` - Cairo compilation
 
 ### Files to Modify
@@ -137,11 +162,11 @@ fn bench_real_proof_generation(c: &mut Criterion) {
 
 ## Testing Requirements
 
-- [ ] Benchmarks compile with default features (mock only)
-- [ ] Benchmarks compile with `--features real-stwo`
-- [ ] Mock benchmarks show ~0ms (instant)
-- [ ] Real benchmarks show actual proving time
-- [ ] Verification benchmarks work for both
+- [ ] Mock benchmarks compile without zk feature
+- [ ] Real benchmarks compile with `--features zk`
+- [ ] Both can run: `cargo bench --features zk`
+- [ ] Mock shows ~0ms (instant)
+- [ ] Real shows actual proving time
 
 ## Performance Expectations
 
