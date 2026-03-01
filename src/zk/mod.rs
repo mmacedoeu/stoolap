@@ -41,6 +41,8 @@ pub mod prover;
 pub mod proof;
 #[cfg(feature = "zk")]
 pub mod bundled;
+#[cfg(feature = "zk")]
+pub mod compressed;
 
 #[cfg(test)]
 #[cfg(feature = "zk")]
@@ -61,4 +63,9 @@ pub use bundled::{
     get_bundled_program, get_bundled_program_name, is_bundled_program, register_bundled_programs,
     BundledError, HEXARY_VERIFY_CASM, HEXARY_VERIFY_HASH, MERKLE_BATCH_CASM, MERKLE_BATCH_HASH,
     STATE_TRANSITION_CASM, STATE_TRANSITION_HASH,
+};
+#[cfg(feature = "zk")]
+pub use compressed::{
+    BatchVerifyError, BatchVerifyInput, AVG_HEXARY_PROOF_SIZE, CompressedProof,
+    CompressedProofError, MAX_BATCH_SIZE, MAX_COMPRESSED_SIZE,
 };
