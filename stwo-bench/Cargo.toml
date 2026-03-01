@@ -5,11 +5,12 @@ edition = "2021"
 publish = false
 
 [dependencies]
-stoolap = { path = "..", features = [] }
+stoolap = { path = "..", features = ["zk"] }
 stwo-cairo-prover = "1.1"
 stwo = "2.1"
 criterion = "0.5"
 
 [[bench]]
 name = "stwo_proof"
+path = "stwo_proof.rs"
 harness = false

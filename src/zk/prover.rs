@@ -219,26 +219,23 @@ impl STWOProver {
         program: &CairoProgram,
         inputs: &[u8],
     ) -> Result<StarkProof, ProverError> {
-        use stwo_cairo_prover::CairoProver;
-
-        // Use STWO to generate real proof
-        let prover = stwo_cairo_prover::CairoProver::new();
-
         // Compile program if needed
-        let compiled = CairoProgram::compile_to_casm(&program.sierra)
+        let _compiled = CairoProgram::compile_to_casm(&program.sierra)
             .map_err(|e| ProverError::CompilationFailed(e.to_string()))?;
 
-        // Generate proof
-        let proof_output = prover.prove(&compiled, inputs)
-            .map_err(|e| ProverError::ProvingFailed(e.to_string()))?;
-
-        Ok(StarkProof {
-            program_hash: program.hash,
-            inputs: inputs.to_vec(),
-            outputs: proof_output.outputs,
-            proof: proof_output.proof,
-            public_inputs: proof_output.public_inputs,
-        })
+        // Note: Real proof generation with crates.io stwo-cairo-prover v1.1
+        // requires the adapter module which is not re-exported.
+        // The ProverInput type is in stwo_cairo_prover::adapter but not available
+        // in the crates.io version.
+        //
+        // For full STWO integration, use:
+        // - Local stwo-cairo with adapter module, or
+        // - A future version of stwo-cairo-prover that exports ProverInput
+        Err(ProverError::ProvingFailed(
+            "Real proof generation requires ProverInput from adapter module. \
+             The crates.io stwo-cairo-prover v1.1 does not export adapter. \
+             Use local stwo-cairo (v1.1.0 tag) with adapter for full integration.".to_string()
+        ))
     }
 }
 
