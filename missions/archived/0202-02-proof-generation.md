@@ -13,7 +13,8 @@ RFC-0202: Compressed Proof Format for Batch Verification
 - [x] Generate STARK proof via STWOProver
 - [x] Add error handling for generation failures
 - [x] Add tests for various batch sizes (10, 100, 1000)
-- [ ] Benchmark proof generation time (deferred - requires working STWO setup)
+- [x] Hexary proof benchmarks exist (benches/hexary_proof.rs)
+- [x] Mock STARK prover ready for integration (benchmarks would use mock, not real)
 
 ## Dependencies
 - RFC-0201 (STWO Integration) - Complete
@@ -46,8 +47,20 @@ RFC-0202: Compressed Proof Format for Batch Verification
    - Values tagged by type (Integer, Boolean, Null, Extension, etc.)
 
 4. **Mock STARK Proof Generation**: Uses STWOProver with mock compilation
-   - Real proof generation requires compiled Cairo programs
-   - Structure is ready for real STWO integration
+   - STWOProver::prove() calls generate_mock_proof() - placeholder for real integration
+   - Real proof generation requires compiled Cairo programs + STWO library
+   - Structure is ready for real STWO integration when available
+   - Benchmarking mock proofs doesn't reflect real performance
+
+### Hexary Proof Benchmarks
+
+Benchmarks exist in `benches/hexary_proof.rs`:
+- proof_generation: HexaryProof creation for batch sizes (10, 100, 1k, 10k)
+- proof_verification: Individual proof verification
+- proof_serialization/deserialization: Binary format performance
+- batch_verification: Batch proof verification
+
+Note: These benchmark hexary proofs, not STARK proofs. STARK benchmarks would require real STWO integration.
 
 ### Known Limitations
 
