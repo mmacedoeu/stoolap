@@ -83,6 +83,9 @@ pub mod parser;
 pub mod storage;
 pub mod trie;
 
+#[cfg(feature = "zk")]
+pub mod zk;
+
 #[cfg(target_arch = "wasm32")]
 pub mod wasm;
 
