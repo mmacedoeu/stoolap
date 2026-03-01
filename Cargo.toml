@@ -168,6 +168,10 @@ harness = false
 name = "delete_complex"
 harness = false
 
+[[bench]]
+name = "hexary_proof"
+harness = false
+
 [profile.bench]
 lto = true
 codegen-units = 1
