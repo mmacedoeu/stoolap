@@ -34,7 +34,11 @@
 //! It enables efficient proof generation and verification for Cairo programs.
 
 #[cfg(feature = "zk")]
+pub mod cairo;
+#[cfg(feature = "zk")]
 pub mod prover;
 
+#[cfg(feature = "zk")]
+pub use cairo::{CairoProgram, CairoProgramHash, CairoProgramRegistry, CompileError, RegistryError};
 #[cfg(feature = "zk")]
 pub use prover::{ProverConfig, STWOProver};
