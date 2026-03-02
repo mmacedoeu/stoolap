@@ -200,26 +200,36 @@ impl RowTrie {
 
 ### Verification
 
+**See [RFC-0205: STWO Plugin Architecture](./0205-stwo-plugin-architecture.md) for full details.**
+
+The verification uses a plugin architecture to keep the root crate compilable on stable Rust while enabling full STWO verification when the plugin is available.
+
 ```rust
 impl CompressedProof {
-    /// Verify compressed proof
-    pub fn verify(&self) -> bool {
-        // Get program from registry
-        let registry = CairoProgramRegistry::get_global();
-        let program = match registry.get(&self.program_hash) {
-            Some(p) => p,
-            None => return false,
-        };
+    /// Verify compressed proof using STWO plugin
+    ///
+    /// Requires the STWO plugin to be available.
+    /// See RFC-0205 for setup instructions.
+    pub fn verify(&self) -> Result<bool, CompressedProofError> {
+        // 1. Validate proof structure
+        self.validate()?;
 
-        // Verify STARK proof
-        let verifier = STWOVerifier::new();
-        match verifier.verify(&self.stark_proof) {
-            Ok(true) => true,
-            _ => false,
-        }
+        // 2. Load plugin
+        let plugin = load_plugin()?;
+
+        // 3. Verify proof
+        plugin.verify(&self.stark_proof.proof)
     }
 }
 ```
+
+**Plugin Discovery:**
+1. Environment variable: `STOOLAP_STWO_PLUGIN`
+2. Default path: `../stwo-plugin/target/release/libstwo_plugin.so`
+
+**Error Handling:**
+- `PluginNotFound` - Plugin not built or not in expected location
+- `PluginError` - Verification failed
 
 ### Encoding Format
 
@@ -320,6 +330,7 @@ Recommended batch sizes based on profiling:
 
 - [RFC-0101: Hexary Merkle Proofs](./0101-hexary-merkle-proofs.md)
 - [RFC-0201: STWO/Cairo Integration](./0201-stwo-cairo-integration.md)
+- [RFC-0205: STWO Plugin Architecture](./0205-stwo-plugin-architecture.md)
 
 ## Open Questions
 
