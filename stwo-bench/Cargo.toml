@@ -6,9 +6,11 @@ publish = false
 
 [dependencies]
 stoolap = { path = "..", features = ["zk"] }
-stwo-cairo-prover = "1.1"
+stwo-cairo-prover = { path = "/home/mmacedoeu/_w/crypto/stwo-cairo/stwo_cairo_prover/crates/prover" }
+stwo-cairo-adapter = { path = "/home/mmacedoeu/_w/crypto/stwo-cairo/stwo_cairo_prover/crates/adapter" }
 stwo = "2.1"
 criterion = "0.5"
+serde_json = "1.0"
 
 [[bench]]
 name = "stwo_proof"
