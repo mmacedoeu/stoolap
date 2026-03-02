@@ -2,6 +2,7 @@
 // Real STWO benchmarks - uses local stwo-cairo with adapter module
 
 use criterion::{criterion_group, criterion_main, Criterion, BenchmarkId};
+use stwo_cairo_adapter::ProverInput;
 
 // Path to stwo-cairo test data
 const STWO_CAIRO_PATH: &str = "/home/mmacedoeu/_w/crypto/stwo-cairo/stwo_cairo_prover/test_data";
@@ -19,9 +20,10 @@ pub fn bench_real_proof_generation_merkle_batch(c: &mut Criterion) {
                 .expect("Failed to read prover input");
 
             b.iter(|| {
-                // Parse the JSON - this simulates what the adapter does
-                let _: serde_json::Value = serde_json::from_str(&input_json)
+                // Deserialize ProverInput from JSON
+                let prover_input: ProverInput = serde_json::from_str(&input_json)
                     .expect("Failed to parse prover input");
+                std::hint::black_box(prover_input);
             });
         });
     }
@@ -62,8 +64,9 @@ pub fn bench_real_proof_generation_hexary_verify(c: &mut Criterion) {
                 .expect("Failed to read prover input");
 
             b.iter(|| {
-                let _: serde_json::Value = serde_json::from_str(&input_json)
+                let prover_input: ProverInput = serde_json::from_str(&input_json)
                     .expect("Failed to parse prover input");
+                std::hint::black_box(prover_input);
             });
         });
     }
@@ -102,8 +105,9 @@ pub fn bench_real_proof_generation_state_transition(c: &mut Criterion) {
                 .expect("Failed to read prover input");
 
             b.iter(|| {
-                let _: serde_json::Value = serde_json::from_str(&input_json)
+                let prover_input: ProverInput = serde_json::from_str(&input_json)
                     .expect("Failed to parse prover input");
+                std::hint::black_box(prover_input);
             });
         });
     }
