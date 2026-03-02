@@ -1,7 +1,7 @@
 # RFC-0202: Compressed Proof Format for Batch Verification
 
 ## Status
-Draft
+Implemented
 
 ## Summary
 

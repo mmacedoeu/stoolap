@@ -1,7 +1,7 @@
 # RFC-0203: Confidential Query Operations
 
 ## Status
-Draft
+Implemented
 
 ## Summary
 

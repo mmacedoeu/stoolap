@@ -1,7 +1,7 @@
 # RFC-0204: L2 Rollup Protocol
 
 ## Status
-Draft
+Implemented
 
 ## Summary
 

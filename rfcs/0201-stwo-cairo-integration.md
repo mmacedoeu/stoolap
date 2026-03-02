@@ -1,7 +1,7 @@
 # RFC-0201: STWO and Cairo Integration for Zero-Knowledge Proofs
 
 ## Status
-Draft
+Implemented
 
 ## Summary
 
