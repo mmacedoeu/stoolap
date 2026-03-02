@@ -44,6 +44,9 @@ pub mod bundled;
 #[cfg(feature = "zk")]
 pub mod compressed;
 
+// Plugin loading - doesn't require zk feature, uses dynamic loading
+pub mod plugin;
+
 #[cfg(test)]
 #[cfg(feature = "zk")]
 mod tests;
@@ -69,3 +72,6 @@ pub use compressed::{
     BatchVerifyError, BatchVerifyInput, AVG_HEXARY_PROOF_SIZE, CompressedProof,
     CompressedProofError, MAX_BATCH_SIZE, MAX_COMPRESSED_SIZE,
 };
+
+// Plugin exports (always available)
+pub use plugin::{load_plugin, PluginError, STWOPlugin};

@@ -153,32 +153,26 @@ impl CompressedProof {
     ///
     /// Returns `Ok(true)` if verification succeeds, or an error if it fails.
     #[cfg(feature = "zk")]
+    /// Verify the compressed proof using STWO plugin
+    ///
+    /// Requires the STWO plugin to be available.
+    /// Set `STOOLAP_STWO_PLUGIN` environment variable or ensure
+    /// `../stwo-plugin/target/release/libstwo_plugin.so` exists.
+    ///
+    /// # Errors
+    ///
+    /// Returns `CompressedProofError::PluginNotFound` if plugin is not available.
     pub fn verify(&self) -> Result<bool, CompressedProofError> {
         // 1. Validate proof structure first
         self.validate()?;
 
-        // 2. Check program hash against registry
-        let registry = crate::zk::CairoProgramRegistry::get_global();
-        if registry.get(&self.program_hash).is_none() {
-            return Err(CompressedProofError::UnregisteredProgram);
-        }
+        // 2. Load and use plugin (no fallback - intentional)
+        let plugin = crate::zk::plugin::load_plugin()
+            .map_err(CompressedProofError::PluginNotFound)?;
 
-        // 3. Verify STARK proof using STWOProver
-        // The STWOProver handles the actual STARK verification
-        let prover = crate::zk::STWOProver::new();
-
-        // For compressed proof verification, we verify the proof itself
-        // (outputs are embedded in the proof structure)
-        match prover.verify(&self.stark_proof, &self.stark_proof.outputs) {
-            Ok(true) => Ok(true),
-            Ok(false) => Err(CompressedProofError::InvalidStarkProof(
-                "STARK proof verification returned false".to_string(),
-            )),
-            Err(e) => Err(CompressedProofError::InvalidStarkProof(format!(
-                "Verification error: {:?}",
-                e
-            ))),
-        }
+        // 3. Verify proof using plugin
+        plugin.verify(&self.stark_proof.proof)
+            .map_err(CompressedProofError::PluginError)
     }
 
     /// Quick verification check (without full STARK verification)
@@ -366,6 +360,10 @@ pub enum CompressedProofError {
     InvalidProgramHash,
     /// Program is not registered in the global registry
     UnregisteredProgram,
+    /// Plugin was not found (STWO not available)
+    PluginNotFound,
+    /// Plugin error occurred
+    PluginError(crate::zk::plugin::PluginError),
     /// Serialization error
     SerializationError(SerializationError),
 }
@@ -389,6 +387,12 @@ impl std::fmt::Display for CompressedProofError {
             CompressedProofError::UnregisteredProgram => {
                 write!(f, "Program is not registered in the global registry")
             }
+            CompressedProofError::PluginNotFound => {
+                write!(f, "STWO plugin not found. Set STOOLAP_STWO_PLUGIN environment variable or build stwo-plugin crate.")
+            }
+            CompressedProofError::PluginError(e) => {
+                write!(f, "STWO plugin error: {}", e)
+            }
             CompressedProofError::SerializationError(e) => {
                 write!(f, "Serialization error: {:?}", e)
             }
@@ -401,6 +405,15 @@ impl std::error::Error for CompressedProofError {}
 impl From<SerializationError> for CompressedProofError {
     fn from(err: SerializationError) -> Self {
         CompressedProofError::SerializationError(err)
+    }
+}
+
+impl From<crate::zk::plugin::PluginError> for CompressedProofError {
+    fn from(err: crate::zk::plugin::PluginError) -> Self {
+        match err {
+            crate::zk::plugin::PluginError::NotFound => CompressedProofError::PluginNotFound,
+            e => CompressedProofError::PluginError(e),
+        }
     }
 }
 
