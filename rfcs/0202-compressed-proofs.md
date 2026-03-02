@@ -225,7 +225,7 @@ impl CompressedProof {
 
 **Plugin Discovery:**
 1. Environment variable: `STOOLAP_STWO_PLUGIN`
-2. Default path: `../stwo-plugin/target/release/libstwo_plugin.so`
+2. Default path: `stwo-plugin/target/release/libstwo_plugin.so`
 
 **Error Handling:**
 - `PluginNotFound` - Plugin not built or not in expected location

@@ -95,7 +95,7 @@ pub extern "C" fn stark_plugin_version() -> *const c_char { ... }
 ### Discovery
 
 1. Environment variable: `STOOLAP_STWO_PLUGIN`
-2. Default path: `../stwo-plugin/target/release/libstwo_plugin.so`
+2. Default path: `stwo-plugin/target/release/libstwo_plugin.so`
 3. Error: Clear message with setup instructions
 
 ### Benchmark Results

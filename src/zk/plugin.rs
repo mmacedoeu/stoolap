@@ -100,15 +100,15 @@ impl STWOPlugin {
 ///
 /// Search order:
 /// 1. Environment variable `STOOLAP_STWO_PLUGIN`
-/// 2. Default path `../stwo-plugin/target/release/libstwo_plugin.so`
+/// 2. Default path `./stwo-plugin/target/release/libstwo_plugin.so`
 pub fn load_plugin() -> Result<STWOPlugin, PluginError> {
     // 1. Check environment variable
     if let Ok(path) = std::env::var("STOOLAP_STWO_PLUGIN") {
         return STWOPlugin::load(Path::new(&path));
     }
 
-    // 2. Check default path (relative to stoolap_chain)
-    let default_path = Path::new("..")
+    // 2. Check default path (inside stoolap_chain)
+    let default_path = Path::new(".")
         .join("stwo-plugin")
         .join("target")
         .join("release")

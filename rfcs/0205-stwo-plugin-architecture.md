@@ -46,7 +46,7 @@ stoolap_chain/           # Root crate (stable Rust)
 │   └── compressed.rs    # Uses plugin for verification
 └── Cargo.toml           # No stwo dependency
 
-../stwo-plugin/          # Plugin crate (nightly Rust)
+stwo-plugin/          # Plugin crate (nightly Rust)
 ├── src/
 │   ├── lib.rs           # C-compatible exports
 │   └── verify.rs        # STWO verification wrapper
@@ -193,7 +193,7 @@ impl STWOPlugin {
 ///
 /// Search order:
 /// 1. Environment variable `STOOLAP_STWO_PLUGIN`
-/// 2. Default path `../stwo-plugin/target/release/libstwo_plugin.so`
+/// 2. Default path `stwo-plugin/target/release/libstwo_plugin.so`
 pub fn load_plugin() -> Result<STWOPlugin, PluginError> {
     // 1. Check environment variable
     if let Ok(path) = std::env::var("STOOLAP_STWO_PLUGIN") {
@@ -226,7 +226,7 @@ impl CompressedProof {
     ///
     /// Requires the STWO plugin to be available.
     /// Set `STOOLAP_STWO_PLUGIN` environment variable or ensure
-    /// `../stwo-plugin/target/release/libstwo_plugin.so` exists.
+    /// `stwo-plugin/target/release/libstwo_plugin.so` exists.
     ///
     /// # Errors
     ///
@@ -266,7 +266,7 @@ pub enum CompressedProofError {
 | Method | Priority | Description |
 |--------|----------|-------------|
 | Environment variable | 1st | `STOOLAP_STWO_PLUGIN=/path/to/libstwo_plugin.so` |
-| Default path | 2nd | `../stwo-plugin/target/release/libstwo_plugin.so` |
+| Default path | 2nd | `stwo-plugin/target/release/libstwo_plugin.so` |
 | Error | - | Clear message with setup instructions |
 
 ## Plugin Crate Structure
@@ -373,7 +373,7 @@ The `zk` feature approach was attempted but:
 
 ### Phase 1: Create Plugin Crate
 
-1. Create `../stwo-plugin/` directory
+1. Create `stwo-plugin/` directory
 2. Add `Cargo.toml` with stwo dependencies
 3. Add `rust-toolchain.toml`
 4. Implement verification wrapper

@@ -157,7 +157,7 @@ impl CompressedProof {
     ///
     /// Requires the STWO plugin to be available.
     /// Set `STOOLAP_STWO_PLUGIN` environment variable or ensure
-    /// `../stwo-plugin/target/release/libstwo_plugin.so` exists.
+    /// `./stwo-plugin/target/release/libstwo_plugin.so` exists.
     ///
     /// # Errors
     ///

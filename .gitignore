@@ -2,6 +2,7 @@
 /target/
 /tools/
 stwo-bench/target/
+stwo-plugin/target/
 **/*.rs.bk
 
 # IDE
