@@ -43,7 +43,9 @@ impl std::fmt::Display for PluginError {
 impl std::error::Error for PluginError {}
 
 /// STWO Plugin wrapper
+#[derive(Debug)]
 pub struct STWOPlugin {
+    #[allow(dead_code)]
     lib: Library,
 }
 

@@ -103,6 +103,7 @@ stwo-cairo-prover = { version = "1.1", optional = true }
 blake3 = { version = "1.5", optional = true }
 which = { version = "7.0", optional = true }
 tempfile = { version = "3.9", optional = true }
+starknet-crypto = { version = "0.6", optional = true }
 
 # Platform-specific file locking
 [target.'cfg(unix)'.dependencies]
@@ -136,7 +137,8 @@ sqlite = ["dep:rusqlite"]
 duckdb = ["dep:duckdb"]
 mimalloc = ["dep:mimalloc"]
 semantic = ["candle-core", "candle-nn", "candle-transformers", "tokenizers", "hf-hub"]
-zk = ["dep:stwo", "dep:stwo-cairo-prover", "dep:blake3", "dep:which", "dep:tempfile", "dep:hex"]  # Zero-knowledge proofs support
+zk = ["dep:stwo", "dep:stwo-cairo-prover", "dep:blake3", "dep:which", "dep:tempfile", "dep:hex"]  # Zero-knowledge proofs (requires nightly)
+commitment = ["dep:starknet-crypto"]  # Pedersen commitments (stable compatible)
 
 [[example]]
 name = "benchmark_sqlite"

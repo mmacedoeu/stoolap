@@ -4700,6 +4700,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "smallvec",
+ "starknet-crypto 0.6.2",
  "stwo",
  "stwo-cairo-prover",
  "tempfile",

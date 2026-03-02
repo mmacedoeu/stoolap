@@ -43,6 +43,8 @@ pub mod proof;
 pub mod bundled;
 #[cfg(feature = "zk")]
 pub mod compressed;
+#[cfg(feature = "commitment")]
+pub mod commitment;
 
 // Plugin loading - doesn't require zk feature, uses dynamic loading
 pub mod plugin;
@@ -71,6 +73,10 @@ pub use bundled::{
 pub use compressed::{
     BatchVerifyError, BatchVerifyInput, AVG_HEXARY_PROOF_SIZE, CompressedProof,
     CompressedProofError, MAX_BATCH_SIZE, MAX_COMPRESSED_SIZE,
+};
+#[cfg(feature = "commitment")]
+pub use commitment::{
+    pedersen_commit, pedersen_commit_batch, open_commitment, open_commitment_batch, Commitment,
 };
 
 // Plugin exports (always available)
