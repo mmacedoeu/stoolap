@@ -9,6 +9,8 @@ stoolap = { path = "..", features = ["zk"] }
 stwo-cairo-prover = { path = "/home/mmacedoeu/_w/crypto/stwo-cairo/stwo_cairo_prover/crates/prover" }
 stwo-cairo-adapter = { path = "/home/mmacedoeu/_w/crypto/stwo-cairo/stwo_cairo_prover/crates/adapter" }
 stwo = "2.1"
+cairo-air = { path = "/home/mmacedoeu/_w/crypto/stwo-cairo/stwo_cairo_prover/crates/cairo-air" }
+sonic-rs = "0.4"
 criterion = "0.5"
 serde_json = "1.0"
 
