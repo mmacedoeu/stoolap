@@ -138,7 +138,7 @@ duckdb = ["dep:duckdb"]
 mimalloc = ["dep:mimalloc"]
 semantic = ["candle-core", "candle-nn", "candle-transformers", "tokenizers", "hf-hub"]
 zk = ["dep:blake3", "dep:which", "dep:tempfile", "dep:hex"]  # ZK types and plugin loader (stable compatible)
-commitment = ["dep:starknet-crypto"]  # Pedersen commitments (stable compatible)
+commitment = ["dep:starknet-crypto", "dep:blake3"]  # Pedersen commitments + confidential queries (stable compatible)
 
 [[example]]
 name = "benchmark_sqlite"

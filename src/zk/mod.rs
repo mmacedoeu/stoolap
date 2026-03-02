@@ -45,6 +45,8 @@ pub mod bundled;
 pub mod compressed;
 #[cfg(feature = "commitment")]
 pub mod commitment;
+#[cfg(feature = "commitment")]
+pub mod confidential;
 
 // Plugin loading - doesn't require zk feature, uses dynamic loading
 pub mod plugin;
@@ -77,6 +79,10 @@ pub use compressed::{
 #[cfg(feature = "commitment")]
 pub use commitment::{
     pedersen_commit, pedersen_commit_batch, open_commitment, open_commitment_batch, Commitment,
+};
+#[cfg(feature = "commitment")]
+pub use confidential::{
+    EncryptedQuery, EncryptedFilter, FilterOp, ConfidentialResult, RangeProof,
 };
 
 // Plugin exports (always available)
